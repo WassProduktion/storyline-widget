@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Storyline Generator</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0a0a0a;
+      --surface: #141414;
+      --surface2: #1c1c1c;
+      --border: #252525;
+      --accent: #c9a96e;
+      --accent-dim: rgba(201, 169, 110, 0.12);
+      --text: #e2e2e2;
+      --text-muted: #666;
+      --text-dim: #999;
+      --radius: 6px;
+      --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font);
+      font-size: 14px;
+      line-height: 1.5;
+      min-height: 100vh;
+    }
+
+    header {
+      padding: 20px 28px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: baseline;
+      gap: 12px;
+    }
+
+    header h1 {
+      font-size: 15px;
+      font-weight: 500;
+      letter-spacing: 0.02em;
+      color: var(--text);
+    }
+
+    header span {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    main {
+      display: grid;
+      grid-template-columns: 380px 1fr;
+      gap: 0;
+      height: calc(100vh - 57px);
+    }
+
+    .controls {
+      border-right: 1px solid var(--border);
+      padding: 24px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    .output-panel {
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .field label {
+      display: block;
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+    }
+
+    select, input[type="text"], textarea {
+      width: 100%;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text);
+      font-family: var(--font);
+      font-size: 13px;
+      padding: 9px 12px;
+      outline: none;
+      transition: border-color 0.15s;
+      -webkit-appearance: none;
+    }
+
+    select {
+      cursor: pointer;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23666' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 10px center;
+      padding-right: 28px;
+    }
+
+    select:focus, input[type="text"]:focus, textarea:focus {
+      border-color: var(--accent);
+    }
+
+    textarea {
+      resize: none;
+    }
+
+    #topic {
+      height: 72px;
+    }
+
+    .model-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .model-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 10px 12px;
+      cursor: pointer;
+      transition: border-color 0.15s, background 0.15s;
+      user-select: none;
+    }
+
+    .model-card:hover {
+      border-color: #3a3a3a;
+      background: var(--surface2);
+    }
+
+    .model-card.selected {
+      border-color: var(--accent);
+      background: var(--accent-dim);
+    }
+
+    .model-card .name {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text);
+      margin-bottom: 2px;
+    }
+
+    .model-card .tag {
+      font-size: 10px;
+      color: var(--text-muted);
+    }
+
+    .duration-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    .duration-row label {
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      white-space: nowrap;
+      margin: 0;
+    }
+
+    #duration-display {
+      font-size: 12px;
+      color: var(--accent);
+      white-space: nowrap;
+    }
+
+    input[type="range"] {
+      flex: 1;
+      -webkit-appearance: none;
+      appearance: none;
+      height: 3px;
+      background: var(--border);
+      border-radius: 2px;
+      outline: none;
+      border: none;
+      padding: 0;
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: var(--accent);
+      cursor: pointer;
+    }
+
+    .btn {
+      width: 100%;
+      padding: 10px;
+      border-radius: var(--radius);
+      font-family: var(--font);
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      border: none;
+      transition: opacity 0.15s;
+    }
+
+    .btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #0a0a0a;
+    }
+
+    .btn-primary:hover:not(:disabled) {
+      opacity: 0.88;
+    }
+
+    .btn-secondary {
+      background: var(--surface2);
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+
+    .btn-secondary:hover:not(:disabled) {
+      border-color: #3a3a3a;
+    }
+
+    .output-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .output-header span {
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+    }
+
+    .copy-btn {
+      font-size: 11px;
+      padding: 4px 10px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      color: var(--text-dim);
+      cursor: pointer;
+      font-family: var(--font);
+      transition: color 0.15s, border-color 0.15s;
+    }
+
+    .copy-btn:hover {
+      color: var(--text);
+      border-color: #3a3a3a;
+    }
+
+    #output {
+      flex: 1;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text);
+      font-family: var(--font);
+      font-size: 13px;
+      line-height: 1.7;
+      padding: 16px;
+      resize: none;
+      outline: none;
+      min-height: 300px;
+    }
+
+    #output::placeholder {
+      color: var(--text-muted);
+    }
+
+    .refine-section {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .refine-section label {
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+    }
+
+    .refine-row {
+      display: flex;
+      gap: 8px;
+    }
+
+    .refine-row input {
+      flex: 1;
+    }
+
+    .refine-row button {
+      width: auto;
+      padding: 9px 16px;
+      white-space: nowrap;
+    }
+
+    .error {
+      color: #e06c75;
+      font-size: 12px;
+      padding: 8px 12px;
+      background: rgba(224, 108, 117, 0.08);
+      border-radius: var(--radius);
+      border: 1px solid rgba(224, 108, 117, 0.2);
+    }
+
+    @media (max-width: 720px) {
+      main {
+        grid-template-columns: 1fr;
+        height: auto;
+      }
+      .controls {
+        border-right: none;
+        border-bottom: 1px solid var(--border);
+      }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>Storyline Generator</h1>
+  <span>Wass Produktion</span>
+</header>
+
+<main>
+  <div class="controls">
+
+    <div class="field">
+      <label>Company</label>
+      <select id="company">
+        <option value="">Loading companies...</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label>Narrative Model</label>
+      <div class="model-grid" id="model-grid"></div>
+    </div>
+
+    <div class="field">
+      <label>Channel</label>
+      <select id="channel">
+        <option value="instagram">Instagram Reel</option>
+        <option value="tiktok">TikTok</option>
+        <option value="linkedin" selected>LinkedIn</option>
+        <option value="youtube">YouTube</option>
+        <option value="brandfilm">Brand Film / Website</option>
+      </select>
+      <div class="duration-row">
+        <label>Duration</label>
+        <input type="range" id="duration-slider">
+        <span id="duration-display"></span>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Topic</label>
+      <textarea id="topic" placeholder="What is the video about? e.g. sustainable innovation, employee growth, new product launch..."></textarea>
+    </div>
+
+    <button class="btn btn-primary" id="generate-btn">Generate</button>
+
+  </div>
+
+  <div class="output-panel">
+    <div class="output-header">
+      <span>Output</span>
+      <button class="copy-btn" id="copy-btn">Copy</button>
+    </div>
+
+    <textarea id="output" placeholder="Your narrative will appear here..."></textarea>
+
+    <div class="refine-section">
+      <label>Refine</label>
+      <div class="refine-row">
+        <input type="text" id="refine-input" placeholder="Make it shorter · more conflict · stronger hook · simpler language...">
+        <button class="btn btn-secondary refine-row" id="refine-btn" style="width:auto;padding:9px 16px;">Refine</button>
+      </div>
+    </div>
+  </div>
+</main>
+
+<script>
+  const MODELS = [
+    { id: 'berettermodellen', name: 'Berettermodellen', tag: '7 phases · Hollywood arc' },
+    { id: 'abt',              name: 'ABT',              tag: 'And · But · Therefore' },
+    { id: 'hcr',              name: 'Hook–Conflict–Resolution', tag: 'Built for social' },
+    { id: 'threeact',         name: 'Three-Act',        tag: 'Full script architecture' },
+    { id: 'psr',              name: 'PSR',              tag: 'Problem · Solution · Result' },
+    { id: 'pixar',            name: 'Pixar Pitch',      tag: '6 sentences · causal chain' },
+  ];
+
+  const CHANNELS = {
+    instagram: { min: 10,  max: 30,  default: 20,  step: 5  },
+    tiktok:    { min: 15,  max: 60,  default: 30,  step: 5  },
+    linkedin:  { min: 20,  max: 80,  default: 60,  step: 10 },
+    youtube:   { min: 120, max: 300, default: 180, step: 30 },
+    brandfilm: { min: 120, max: 360, default: 240, step: 30 },
+  };
+
+  function formatDuration(sec) {
+    if (sec < 60) return `${sec}s`;
+    const m = Math.floor(sec / 60);
+    const s = sec % 60;
+    return s > 0 ? `${m}m ${s}s` : `${m} min`;
+  }
+
+  let selectedModel = 'berettermodellen';
+
+  // Build model grid
+  const grid = document.getElementById('model-grid');
+  MODELS.forEach(m => {
+    const card = document.createElement('div');
+    card.className = 'model-card' + (m.id === selectedModel ? ' selected' : '');
+    card.dataset.id = m.id;
+    card.innerHTML = `<div class="name">${m.name}</div><div class="tag">${m.tag}</div>`;
+    card.addEventListener('click', () => {
+      document.querySelectorAll('.model-card').forEach(c => c.classList.remove('selected'));
+      card.classList.add('selected');
+      selectedModel = m.id;
+    });
+    grid.appendChild(card);
+  });
+
+  // Channel + duration
+  const channelEl = document.getElementById('channel');
+  const slider = document.getElementById('duration-slider');
+  const durationDisplay = document.getElementById('duration-display');
+
+  function updateSlider() {
+    const ch = CHANNELS[channelEl.value];
+    slider.min = ch.min;
+    slider.max = ch.max;
+    slider.step = ch.step;
+    slider.value = ch.default;
+    durationDisplay.textContent = formatDuration(ch.default);
+  }
+
+  channelEl.addEventListener('change', updateSlider);
+  slider.addEventListener('input', () => {
+    durationDisplay.textContent = formatDuration(parseInt(slider.value));
+  });
+  updateSlider();
+
+  // Load companies
+  fetch('/api/companies')
+    .then(r => r.json())
+    .then(({ companies }) => {
+      const sel = document.getElementById('company');
+      sel.innerHTML = '';
+      companies.forEach(c => {
+        const opt = document.createElement('option');
+        opt.value = c;
+        opt.textContent = c;
+        sel.appendChild(opt);
+      });
+    })
+    .catch(() => {
+      document.getElementById('company').innerHTML = '<option value="">Failed to load companies</option>';
+    });
+
+  // Stream helper
+  async function streamRequest(url, body, onText, onDone, onError) {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split('\n');
+      buffer = lines.pop() ?? '';
+      for (const line of lines) {
+        if (!line.startsWith('data: ')) continue;
+        const payload = line.slice(6);
+        if (payload === '[DONE]') { onDone(); return; }
+        try {
+          const parsed = JSON.parse(payload);
+          if (parsed.error) { onError(parsed.error); return; }
+          if (parsed.text) onText(parsed.text);
+        } catch {}
+      }
+    }
+    onDone();
+  }
+
+  // Generate
+  const generateBtn = document.getElementById('generate-btn');
+  const outputEl = document.getElementById('output');
+
+  generateBtn.addEventListener('click', async () => {
+    const topic = document.getElementById('topic').value.trim();
+    const company = document.getElementById('company').value;
+    if (!topic) { outputEl.value = ''; outputEl.placeholder = 'Please enter a topic first.'; return; }
+    if (!company) { outputEl.value = ''; outputEl.placeholder = 'Please select a company first.'; return; }
+
+    generateBtn.disabled = true;
+    generateBtn.textContent = 'Generating...';
+    outputEl.value = '';
+
+    await streamRequest(
+      '/api/generate',
+      { topic, company, model: selectedModel, channel: channelEl.value, duration: parseInt(slider.value) },
+      text => { outputEl.value += text; outputEl.scrollTop = outputEl.scrollHeight; },
+      () => { generateBtn.disabled = false; generateBtn.textContent = 'Generate'; },
+      err => { outputEl.value = `Error: ${err}`; generateBtn.disabled = false; generateBtn.textContent = 'Generate'; }
+    );
+  });
+
+  // Refine
+  const refineBtn = document.getElementById('refine-btn');
+  const refineInput = document.getElementById('refine-input');
+
+  refineBtn.addEventListener('click', async () => {
+    const feedback = refineInput.value.trim();
+    const original = outputEl.value.trim();
+    const topic = document.getElementById('topic').value.trim();
+    const company = document.getElementById('company').value;
+    if (!feedback) return;
+    if (!original) { outputEl.placeholder = 'Generate something first, then refine.'; return; }
+
+    refineBtn.disabled = true;
+    refineBtn.textContent = 'Refining...';
+    outputEl.value = '';
+
+    await streamRequest(
+      '/api/refine',
+      { topic, company, model: selectedModel, channel: channelEl.value, duration: parseInt(slider.value), original, feedback },
+      text => { outputEl.value += text; outputEl.scrollTop = outputEl.scrollHeight; },
+      () => { refineBtn.disabled = false; refineBtn.textContent = 'Refine'; refineInput.value = ''; },
+      err => { outputEl.value = `Error: ${err}`; refineBtn.disabled = false; refineBtn.textContent = 'Refine'; }
+    );
+  });
+
+  // Copy
+  document.getElementById('copy-btn').addEventListener('click', () => {
+    const text = outputEl.value;
+    if (!text) return;
+    navigator.clipboard.writeText(text).then(() => {
+      const btn = document.getElementById('copy-btn');
+      btn.textContent = 'Copied';
+      setTimeout(() => { btn.textContent = 'Copy'; }, 1500);
+    });
+  });
+</script>
+</body>
+</html>
