@@ -27,6 +27,15 @@ async function embed(text) {
   return data.data[0].embedding;
 }
 
+async function getProfile(company) {
+  const { data } = await supabase
+    .from('company_profiles')
+    .select('profile')
+    .eq('company', company)
+    .single();
+  return data?.profile || null;
+}
+
 async function search(embedding, company, count = 10) {
   const { data, error } = await supabase.rpc('match_documents', {
     query_embedding: embedding,
@@ -36,6 +45,20 @@ async function search(embedding, company, count = 10) {
   if (error) throw new Error(`Supabase error: ${error.message}`);
   return data;
 }
+
+const CHANNEL_TONE = {
+  instagram: 'No warm-up, no context. The first second is the only second that matters. Write for someone mid-scroll who hasn\'t decided to watch yet. One emotion, one idea, one reason to stay.',
+  linkedin:  'Thoughtful and direct. Written for people who think for a living. One clear idea, developed with precision. No buzzwords, no empty inspiration. Ends with something worth sitting with.',
+  youtube:   'Narrative first, message second. The viewer chose to be here — earn that with a story that unfolds, not a pitch that performs. Specific details over grand statements. Show the work, not the idea of the work.',
+  website:   'This is the definitive version. No trending format, no platform pressure. Write as if it will be read five years from now. The viewer came here on purpose — they are already interested. Reward that with depth, not a sales pitch. Quiet confidence over performance. The company at its most honest.',
+};
+
+const CHANNEL_LABEL = {
+  instagram: 'Instagram',
+  linkedin:  'LinkedIn',
+  youtube:   'YouTube',
+  website:   'Corporate Website / Brand Film',
+};
 
 const MODEL_INSTRUCTIONS = {
   berettermodellen: `Structure the narrative across these 7 phases (label each):
@@ -101,17 +124,19 @@ function buildPrompt({ topic, company, model, channel, duration, context, feedba
   const modelInstructions = MODEL_INSTRUCTIONS[model] || MODEL_INSTRUCTIONS.berettermodellen;
   const durationGuidance = getDurationGuidance(duration);
   const durationLabel = formatDuration(duration);
+  const channelLabel = CHANNEL_LABEL[channel] || channel;
+  const tone = CHANNEL_TONE[channel] || '';
 
   const base = `You are an experienced video producer specialising in corporate storytelling.
 
-Below is information about ${companyLabel}, sourced directly from their own materials:
+${profile ? `COMPANY PROFILE — always reflect these values and commitments in the narrative:\n${profile}\n\n` : ''}Below is information about ${companyLabel}, sourced directly from their own materials:
 
 ${context}
 
 `;
 
   if (feedback && original) {
-    return base + `The following narrative was written for a ${channel} video (${durationLabel}) about "${topic}":
+    return base + `The following narrative was written for a ${channelLabel} video (${durationLabel}) about "${topic}":
 
 ---
 ${original}
@@ -124,8 +149,9 @@ Keep the same model structure. Output only the narrative text — no stage direc
 ${durationGuidance}`;
   }
 
-  return base + `Write a narrative for a ${channel} video about: "${topic}"
+  return base + `Write a narrative for a ${channelLabel} video about: "${topic}"
 Target duration: ${durationLabel}
+Tone and register: ${tone}
 
 Output ONLY the narrative text — no stage directions, no camera instructions, no scene descriptions. Only what is spoken or written on screen.
 
@@ -144,7 +170,10 @@ async function streamGenerate(res, promptArgs) {
   res.setHeader('Connection', 'keep-alive');
 
   try {
-    const embedding = await embed(promptArgs.topic);
+    const [embedding, profile] = await Promise.all([
+      embed(promptArgs.topic),
+      getProfile(promptArgs.company),
+    ]);
     const chunks = await search(embedding, promptArgs.company);
 
     if (!chunks || chunks.length === 0) {
@@ -153,7 +182,7 @@ async function streamGenerate(res, promptArgs) {
     }
 
     const context = chunks.map((c, i) => `[${i + 1}] ${c.content}`).join('\n\n');
-    const prompt = buildPrompt({ ...promptArgs, context });
+    const prompt = buildPrompt({ ...promptArgs, context, profile });
     const maxTokens = getMaxTokens(promptArgs.duration);
 
     const stream = anthropic.messages.stream({

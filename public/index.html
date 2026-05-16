@@ -360,16 +360,15 @@
     <div class="field">
       <label>Channel</label>
       <select id="channel">
-        <option value="instagram">Instagram Reel</option>
-        <option value="tiktok">TikTok</option>
+        <option value="instagram">Instagram</option>
         <option value="linkedin" selected>LinkedIn</option>
         <option value="youtube">YouTube</option>
-        <option value="brandfilm">Brand Film / Website</option>
+        <option value="website">Corporate Website / Brand Film</option>
       </select>
       <div class="duration-row">
         <label>Duration</label>
-        <input type="range" id="duration-slider">
-        <span id="duration-display"></span>
+        <input type="range" id="duration-slider" min="10" max="240" step="5" value="60">
+        <span id="duration-display">1 min</span>
       </div>
     </div>
 
@@ -402,21 +401,13 @@
 
 <script>
   const MODELS = [
-    { id: 'berettermodellen', name: 'Berettermodellen', tag: '7 phases · Hollywood arc' },
-    { id: 'abt',              name: 'ABT',              tag: 'And · But · Therefore' },
-    { id: 'hcr',              name: 'Hook–Conflict–Resolution', tag: 'Built for social' },
-    { id: 'threeact',         name: 'Three-Act',        tag: 'Full script architecture' },
-    { id: 'psr',              name: 'PSR',              tag: 'Problem · Solution · Result' },
-    { id: 'pixar',            name: 'Pixar Pitch',      tag: '6 sentences · causal chain' },
+    { id: 'berettermodellen', name: 'Hollywood',            tag: '7 phases · tension arc' },
+    { id: 'abt',              name: 'AndButTherefore',     tag: 'And · But · Therefore' },
+    { id: 'hcr',              name: 'HookConflictResolution', tag: 'Built for social' },
+    { id: 'threeact',         name: 'Aristoteles',         tag: 'Full script architecture' },
+    { id: 'psr',              name: 'Commercial B2B',      tag: 'Problem · Solution · Result' },
+    { id: 'pixar',            name: 'Pixar Pitch',         tag: '6 sentences · causal chain' },
   ];
-
-  const CHANNELS = {
-    instagram: { min: 10,  max: 30,  default: 20,  step: 5  },
-    tiktok:    { min: 15,  max: 60,  default: 30,  step: 5  },
-    linkedin:  { min: 20,  max: 80,  default: 60,  step: 10 },
-    youtube:   { min: 120, max: 300, default: 180, step: 30 },
-    brandfilm: { min: 120, max: 360, default: 240, step: 30 },
-  };
 
   function formatDuration(sec) {
     if (sec < 60) return `${sec}s`;
@@ -424,6 +415,13 @@
     const s = sec % 60;
     return s > 0 ? `${m}m ${s}s` : `${m} min`;
   }
+
+  // Duration slider
+  const slider = document.getElementById('duration-slider');
+  const durationDisplay = document.getElementById('duration-display');
+  slider.addEventListener('input', () => {
+    durationDisplay.textContent = formatDuration(parseInt(slider.value));
+  });
 
   let selectedModel = 'berettermodellen';
 
@@ -442,25 +440,7 @@
     grid.appendChild(card);
   });
 
-  // Channel + duration
   const channelEl = document.getElementById('channel');
-  const slider = document.getElementById('duration-slider');
-  const durationDisplay = document.getElementById('duration-display');
-
-  function updateSlider() {
-    const ch = CHANNELS[channelEl.value];
-    slider.min = ch.min;
-    slider.max = ch.max;
-    slider.step = ch.step;
-    slider.value = ch.default;
-    durationDisplay.textContent = formatDuration(ch.default);
-  }
-
-  channelEl.addEventListener('change', updateSlider);
-  slider.addEventListener('input', () => {
-    durationDisplay.textContent = formatDuration(parseInt(slider.value));
-  });
-  updateSlider();
 
   // Load companies
   fetch('/api/companies')
