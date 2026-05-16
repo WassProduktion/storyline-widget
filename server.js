@@ -219,7 +219,6 @@ async function streamGenerate(res, promptArgs) {
     res.write('data: [DONE]\n\n');
     res.end();
   } catch (err) {
-    console.error('generate error:', err.message, err.status, err.error);
     res.write(`data: ${JSON.stringify({ error: err.message })}\n\n`);
     res.end();
   }
@@ -232,7 +231,6 @@ app.get('/api/companies', async (req, res) => {
     const companies = [...new Set(data.map(d => d.company))].sort();
     res.json({ companies });
   } catch (err) {
-    console.error('companies error:', err.message);
     res.status(500).json({ error: err.message });
   }
 });
@@ -254,9 +252,4 @@ app.post('/api/refine', async (req, res) => {
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`Storyline Widget running at http://localhost:${PORT}`);
-  console.log('ANTHROPIC_API_KEY:', process.env.ANTHROPIC_API_KEY ? process.env.ANTHROPIC_API_KEY.slice(0, 20) + '...' : 'MISSING');
-  console.log('VOYAGE_API_KEY:', process.env.VOYAGE_API_KEY ? process.env.VOYAGE_API_KEY.slice(0, 10) + '...' : 'MISSING');
-  console.log('SUPABASE_URL:', process.env.SUPABASE_URL || 'MISSING');
-});
+app.listen(PORT, () => console.log(`Storyline Widget running at http://localhost:${PORT}`));
