@@ -230,6 +230,7 @@ app.get('/api/companies', async (req, res) => {
     const companies = [...new Set(data.map(d => d.company))].sort();
     res.json({ companies });
   } catch (err) {
+    console.error('companies error:', err.message);
     res.status(500).json({ error: err.message });
   }
 });
