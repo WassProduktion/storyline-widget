@@ -137,7 +137,7 @@ function formatDuration(sec) {
   return s > 0 ? `${m} min ${s} sec` : `${m} minutes`;
 }
 
-function buildPrompt({ topic, company, model, channel, duration, context, feedback, original }) {
+function buildPrompt({ topic, company, model, channel, duration, context, feedback, original, profile }) {
   const companyLabel = company || 'the company';
   const modelInstructions = MODEL_INSTRUCTIONS[model] || MODEL_INSTRUCTIONS.berettermodellen;
   const durationGuidance = getDurationGuidance(duration);
