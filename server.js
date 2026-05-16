@@ -254,4 +254,9 @@ app.post('/api/refine', async (req, res) => {
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Storyline Widget running at http://localhost:${PORT}`));
+app.listen(PORT, () => {
+  console.log(`Storyline Widget running at http://localhost:${PORT}`);
+  console.log('ANTHROPIC_API_KEY:', process.env.ANTHROPIC_API_KEY ? process.env.ANTHROPIC_API_KEY.slice(0, 20) + '...' : 'MISSING');
+  console.log('VOYAGE_API_KEY:', process.env.VOYAGE_API_KEY ? process.env.VOYAGE_API_KEY.slice(0, 10) + '...' : 'MISSING');
+  console.log('SUPABASE_URL:', process.env.SUPABASE_URL || 'MISSING');
+});
