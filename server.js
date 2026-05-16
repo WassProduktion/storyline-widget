@@ -219,6 +219,7 @@ async function streamGenerate(res, promptArgs) {
     res.write('data: [DONE]\n\n');
     res.end();
   } catch (err) {
+    console.error('generate error:', err.message, err.status, err.error);
     res.write(`data: ${JSON.stringify({ error: err.message })}\n\n`);
     res.end();
   }
