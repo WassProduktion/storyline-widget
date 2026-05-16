@@ -7,6 +7,24 @@ import { dirname, join } from 'path';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const app = express();
+
+app.use((req, res, next) => {
+  const auth = req.headers.authorization;
+  if (!auth || !auth.startsWith('Basic ')) {
+    res.setHeader('WWW-Authenticate', 'Basic realm="Storyline Generator"');
+    return res.status(401).send('Authentication required');
+  }
+  const decoded = Buffer.from(auth.slice(6), 'base64').toString();
+  const colon = decoded.indexOf(':');
+  const user = decoded.slice(0, colon);
+  const pass = decoded.slice(colon + 1);
+  if (user !== process.env.AUTH_USER || pass !== process.env.AUTH_PASS) {
+    res.setHeader('WWW-Authenticate', 'Basic realm="Storyline Generator"');
+    return res.status(401).send('Invalid credentials');
+  }
+  next();
+});
+
 app.use(express.json());
 app.use(express.static(join(__dirname, 'public')));
 
