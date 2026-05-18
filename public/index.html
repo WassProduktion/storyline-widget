@@ -4,24 +4,27 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Storyline Generator</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700;900&display=swap" rel="stylesheet">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --bg: #0a0a0a;
-      --surface: #141414;
-      --surface2: #1c1c1c;
-      --border: #252525;
-      --accent: #c9a96e;
-      --accent-dim: rgba(201, 169, 110, 0.12);
-      --text: #e2e2e2;
-      --text-muted: #666;
-      --text-dim: #999;
-      --radius: 6px;
-      --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      --bg: #ffffff;
+      --surface: #F7F7F5;
+      --surface2: #EEEEEC;
+      --border: #E0E0DC;
+      --accent: #E8F44A;
+      --accent-dim: rgba(232, 244, 74, 0.20);
+      --text: #1A1A1A;
+      --text-muted: #606060;
+      --text-dim: #A0A0A0;
+      --radius: 10px;
+      --font: 'Lato', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     }
 
-    body {
+    html, body {
       background: var(--bg);
       color: var(--text);
       font-family: var(--font);
@@ -31,17 +34,21 @@
     }
 
     header {
-      padding: 20px 28px;
+      padding: 16px 20px;
       border-bottom: 1px solid var(--border);
       display: flex;
       align-items: baseline;
-      gap: 12px;
+      gap: 10px;
+      background: var(--bg);
+      position: sticky;
+      top: 0;
+      z-index: 10;
     }
 
     header h1 {
       font-size: 15px;
-      font-weight: 500;
-      letter-spacing: 0.02em;
+      font-weight: 900;
+      letter-spacing: -0.01em;
       color: var(--text);
     }
 
@@ -50,33 +57,31 @@
       color: var(--text-muted);
     }
 
+    /* Mobile-first: single column */
     main {
-      display: grid;
-      grid-template-columns: 380px 1fr;
-      gap: 0;
-      height: calc(100vh - 57px);
+      display: flex;
+      flex-direction: column;
     }
 
     .controls {
-      border-right: 1px solid var(--border);
-      padding: 24px;
-      overflow-y: auto;
+      padding: 20px 16px;
       display: flex;
       flex-direction: column;
-      gap: 24px;
+      gap: 20px;
+      border-bottom: 1px solid var(--border);
     }
 
     .output-panel {
-      padding: 24px;
+      padding: 20px 16px;
       display: flex;
       flex-direction: column;
-      gap: 16px;
+      gap: 14px;
     }
 
     .field label {
       display: block;
       font-size: 11px;
-      font-weight: 500;
+      font-weight: 700;
       letter-spacing: 0.08em;
       text-transform: uppercase;
       color: var(--text-muted);
@@ -87,11 +92,11 @@
       width: 100%;
       background: var(--surface);
       border: 1px solid var(--border);
-      border-radius: var(--radius);
+      border-radius: 8px;
       color: var(--text);
       font-family: var(--font);
-      font-size: 13px;
-      padding: 9px 12px;
+      font-size: 14px;
+      padding: 11px 13px;
       outline: none;
       transition: border-color 0.15s;
       -webkit-appearance: none;
@@ -99,23 +104,20 @@
 
     select {
       cursor: pointer;
-      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23666' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23999' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
       background-repeat: no-repeat;
-      background-position: right 10px center;
-      padding-right: 28px;
+      background-position: right 12px center;
+      padding-right: 32px;
     }
 
     select:focus, input[type="text"]:focus, textarea:focus {
-      border-color: var(--accent);
+      border-color: #A0A800;
+      box-shadow: 0 0 0 3px rgba(232,244,74,0.15);
     }
 
-    textarea {
-      resize: none;
-    }
+    textarea { resize: none; }
 
-    #topic {
-      height: 72px;
-    }
+    #topic { height: 80px; }
 
     .model-grid {
       display: grid;
@@ -126,26 +128,24 @@
     .model-card {
       background: var(--surface);
       border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 10px 12px;
+      border-radius: 8px;
+      padding: 11px 12px;
       cursor: pointer;
       transition: border-color 0.15s, background 0.15s;
       user-select: none;
+      min-height: 52px;
     }
 
-    .model-card:hover {
-      border-color: #3a3a3a;
-      background: var(--surface2);
-    }
+    .model-card:hover { background: var(--surface2); }
 
     .model-card.selected {
-      border-color: var(--accent);
+      border-color: #A0A800;
       background: var(--accent-dim);
     }
 
     .model-card .name {
       font-size: 12px;
-      font-weight: 500;
+      font-weight: 700;
       color: var(--text);
       margin-bottom: 2px;
     }
@@ -164,7 +164,7 @@
 
     .duration-row label {
       font-size: 11px;
-      font-weight: 500;
+      font-weight: 700;
       letter-spacing: 0.08em;
       text-transform: uppercase;
       color: var(--text-muted);
@@ -174,7 +174,8 @@
 
     #duration-display {
       font-size: 12px;
-      color: var(--accent);
+      font-weight: 700;
+      color: #6a7200;
       white-space: nowrap;
     }
 
@@ -192,38 +193,34 @@
 
     input[type="range"]::-webkit-slider-thumb {
       -webkit-appearance: none;
-      width: 14px;
-      height: 14px;
+      width: 18px;
+      height: 18px;
       border-radius: 50%;
-      background: var(--accent);
+      background: #A0A800;
       cursor: pointer;
     }
 
     .btn {
       width: 100%;
-      padding: 10px;
+      padding: 13px;
       border-radius: var(--radius);
       font-family: var(--font);
-      font-size: 13px;
-      font-weight: 500;
+      font-size: 14px;
+      font-weight: 900;
       cursor: pointer;
       border: none;
       transition: opacity 0.15s;
+      min-height: 48px;
     }
 
-    .btn:disabled {
-      opacity: 0.4;
-      cursor: not-allowed;
-    }
+    .btn:disabled { opacity: 0.4; cursor: not-allowed; }
 
     .btn-primary {
       background: var(--accent);
-      color: #0a0a0a;
+      color: #1A1A1A;
     }
 
-    .btn-primary:hover:not(:disabled) {
-      opacity: 0.88;
-    }
+    .btn-primary:hover:not(:disabled) { opacity: 0.85; }
 
     .btn-secondary {
       background: var(--surface2);
@@ -231,9 +228,7 @@
       border: 1px solid var(--border);
     }
 
-    .btn-secondary:hover:not(:disabled) {
-      border-color: #3a3a3a;
-    }
+    .btn-secondary:hover:not(:disabled) { background: #E4E4E2; }
 
     .output-header {
       display: flex;
@@ -243,47 +238,44 @@
 
     .output-header span {
       font-size: 11px;
-      font-weight: 500;
+      font-weight: 700;
       letter-spacing: 0.08em;
       text-transform: uppercase;
       color: var(--text-muted);
     }
 
     .copy-btn {
-      font-size: 11px;
-      padding: 4px 10px;
-      background: var(--surface2);
+      font-size: 12px;
+      font-weight: 700;
+      padding: 6px 12px;
+      background: var(--surface);
       border: 1px solid var(--border);
-      border-radius: 4px;
-      color: var(--text-dim);
+      border-radius: 6px;
+      color: var(--text-muted);
       cursor: pointer;
       font-family: var(--font);
       transition: color 0.15s, border-color 0.15s;
+      min-height: 34px;
     }
 
-    .copy-btn:hover {
-      color: var(--text);
-      border-color: #3a3a3a;
-    }
+    .copy-btn:hover { color: var(--text); border-color: #B0B0AC; }
 
     #output {
-      flex: 1;
       background: var(--surface);
       border: 1px solid var(--border);
       border-radius: var(--radius);
       color: var(--text);
       font-family: var(--font);
-      font-size: 13px;
+      font-size: 14px;
       line-height: 1.7;
       padding: 16px;
       resize: none;
       outline: none;
-      min-height: 300px;
+      min-height: 280px;
+      width: 100%;
     }
 
-    #output::placeholder {
-      color: var(--text-muted);
-    }
+    #output::placeholder { color: var(--text-dim); }
 
     .refine-section {
       display: flex;
@@ -293,7 +285,7 @@
 
     .refine-section label {
       font-size: 11px;
-      font-weight: 500;
+      font-weight: 700;
       letter-spacing: 0.08em;
       text-transform: uppercase;
       color: var(--text-muted);
@@ -304,33 +296,55 @@
       gap: 8px;
     }
 
-    .refine-row input {
-      flex: 1;
-    }
+    .refine-row input { flex: 1; }
 
     .refine-row button {
       width: auto;
-      padding: 9px 16px;
+      padding: 11px 16px;
       white-space: nowrap;
+      min-height: 46px;
     }
 
     .error {
-      color: #e06c75;
+      color: #c0392b;
       font-size: 12px;
-      padding: 8px 12px;
-      background: rgba(224, 108, 117, 0.08);
-      border-radius: var(--radius);
-      border: 1px solid rgba(224, 108, 117, 0.2);
+      padding: 10px 13px;
+      background: rgba(192, 57, 43, 0.06);
+      border-radius: 8px;
+      border: 1px solid rgba(192, 57, 43, 0.15);
     }
 
-    @media (max-width: 720px) {
+    /* Desktop: 2-column side-by-side */
+    @media (min-width: 768px) {
       main {
-        grid-template-columns: 1fr;
-        height: auto;
+        display: grid;
+        grid-template-columns: 360px 1fr;
+        height: calc(100vh - 53px);
+        flex-direction: unset;
       }
+
       .controls {
-        border-right: none;
-        border-bottom: 1px solid var(--border);
+        border-bottom: none;
+        border-right: 1px solid var(--border);
+        padding: 28px 24px;
+        overflow-y: auto;
+        gap: 24px;
+      }
+
+      .output-panel {
+        padding: 28px 24px;
+        overflow-y: auto;
+      }
+
+      #output {
+        flex: 1;
+        min-height: 200px;
+        height: 100%;
+      }
+
+      .output-panel {
+        display: flex;
+        flex-direction: column;
       }
     }
   </style>
@@ -373,6 +387,14 @@
     </div>
 
     <div class="field">
+      <label>Sprog / Language</label>
+      <select id="language">
+        <option value="en">English</option>
+        <option value="da">Dansk</option>
+      </select>
+    </div>
+
+    <div class="field">
       <label>Topic</label>
       <textarea id="topic" placeholder="What is the video about? e.g. sustainable innovation, employee growth, new product launch..."></textarea>
     </div>
@@ -401,12 +423,12 @@
 
 <script>
   const MODELS = [
-    { id: 'berettermodellen', name: 'Hollywood',            tag: '7 phases · tension arc' },
-    { id: 'abt',              name: 'AndButTherefore',     tag: 'And · But · Therefore' },
-    { id: 'hcr',              name: 'HookConflictResolution', tag: 'Built for social' },
-    { id: 'threeact',         name: 'Aristoteles',         tag: 'Full script architecture' },
-    { id: 'psr',              name: 'Commercial B2B',      tag: 'Problem · Solution · Result' },
-    { id: 'pixar',            name: 'Pixar Pitch',         tag: '6 sentences · causal chain' },
+    { id: 'hcr',              name: 'HCR',                      tag: 'Hook · Conflict · Resolution' },
+    { id: 'psr',              name: 'Commercial B2B',           tag: 'Problem · Solution · Result' },
+    { id: 'abt',              name: 'ABT',                       tag: 'And · But · Therefore' },
+    { id: 'threeact',         name: 'Aristoteles',              tag: 'Full script architecture' },
+    { id: 'berettermodellen', name: 'Hollywood',                tag: '7 phases · tension arc' },
+    { id: 'pixar',            name: 'Pixar Pitch',              tag: '6 sentences · causal chain' },
   ];
 
   function formatDuration(sec) {
@@ -423,7 +445,7 @@
     durationDisplay.textContent = formatDuration(parseInt(slider.value));
   });
 
-  let selectedModel = 'berettermodellen';
+  let selectedModel = 'hcr';
 
   // Build model grid
   const grid = document.getElementById('model-grid');
@@ -507,7 +529,7 @@
 
     await streamRequest(
       '/api/generate',
-      { topic, company, model: selectedModel, channel: channelEl.value, duration: parseInt(slider.value) },
+      { topic, company, model: selectedModel, channel: channelEl.value, duration: parseInt(slider.value), language: document.getElementById('language').value },
       text => { outputEl.value += text; outputEl.scrollTop = outputEl.scrollHeight; },
       () => { generateBtn.disabled = false; generateBtn.textContent = 'Generate'; },
       err => { outputEl.value = `Error: ${err}`; generateBtn.disabled = false; generateBtn.textContent = 'Generate'; }
@@ -532,7 +554,7 @@
 
     await streamRequest(
       '/api/refine',
-      { topic, company, model: selectedModel, channel: channelEl.value, duration: parseInt(slider.value), original, feedback },
+      { topic, company, model: selectedModel, channel: channelEl.value, duration: parseInt(slider.value), language: document.getElementById('language').value, original, feedback },
       text => { outputEl.value += text; outputEl.scrollTop = outputEl.scrollHeight; },
       () => { refineBtn.disabled = false; refineBtn.textContent = 'Refine'; refineInput.value = ''; },
       err => { outputEl.value = `Error: ${err}`; refineBtn.disabled = false; refineBtn.textContent = 'Refine'; }

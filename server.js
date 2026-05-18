@@ -137,7 +137,7 @@ function formatDuration(sec) {
   return s > 0 ? `${m} min ${s} sec` : `${m} minutes`;
 }
 
-function buildPrompt({ topic, company, model, channel, duration, context, feedback, original, profile }) {
+function buildPrompt({ topic, company, model, channel, duration, language, context, feedback, original, profile }) {
   const companyLabel = company || 'the company';
   const modelInstructions = MODEL_INSTRUCTIONS[model] || MODEL_INSTRUCTIONS.berettermodellen;
   const durationGuidance = getDurationGuidance(duration);
@@ -153,6 +153,8 @@ ${context}
 
 `;
 
+  const langInstruction = language === 'da' ? 'Write in Danish.' : 'Write in English.';
+
   if (feedback && original) {
     return base + `The following narrative was written for a ${channelLabel} video (${durationLabel}) about "${topic}":
 
@@ -162,7 +164,7 @@ ${original}
 
 Refine it based on this feedback: "${feedback}"
 
-Keep the same model structure. Output only the narrative text — no stage directions, no camera notes. Write in English.
+Keep the same model structure. Output only the narrative text — no stage directions, no camera notes. ${langInstruction}
 
 ${durationGuidance}`;
   }
@@ -179,7 +181,7 @@ ${modelInstructions}
 
 ${durationGuidance}
 
-Use specific facts, names and language from the source material. Avoid generic phrases and clichés. Write in English.`;
+Use specific facts, names and language from the source material. Avoid generic phrases and clichés. Du må KUN bruge navne, fakta og situationer der fremgår direkte af kildematerialet. Opfind ingenting. ${langInstruction}`;
 }
 
 async function streamGenerate(res, promptArgs) {
@@ -193,7 +195,7 @@ async function streamGenerate(res, promptArgs) {
       embed(promptArgs.topic),
       getProfile(promptArgs.company),
     ]);
-    const chunks = await search(embedding, promptArgs.company);
+    const chunks = await search(embedding, promptArgs.company, 20);
 
     if (!chunks || chunks.length === 0) {
       res.write(`data: ${JSON.stringify({ error: 'No data found for this company. Try ingesting more content first.' })}\n\n`);
@@ -226,29 +228,31 @@ async function streamGenerate(res, promptArgs) {
 
 app.get('/api/companies', async (req, res) => {
   try {
-    const { data, error } = await supabase.from('documents').select('company').not('company', 'is', null);
+    const { data, error } = await supabase
+      .from('company_profiles')
+      .select('company')
+      .order('company');
     if (error) throw error;
-    const companies = [...new Set(data.map(d => d.company))].sort();
-    res.json({ companies });
+    res.json({ companies: data.map(d => d.company) });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
 app.post('/api/generate', async (req, res) => {
-  const { topic, company, model, channel, duration } = req.body;
+  const { topic, company, model, channel, duration, language } = req.body;
   if (!topic || !company || !model || !channel || !duration) {
     return res.status(400).json({ error: 'Missing required fields' });
   }
-  await streamGenerate(res, { topic, company, model, channel, duration });
+  await streamGenerate(res, { topic, company, model, channel, duration, language: language || 'en' });
 });
 
 app.post('/api/refine', async (req, res) => {
-  const { topic, company, model, channel, duration, original, feedback } = req.body;
+  const { topic, company, model, channel, duration, language, original, feedback } = req.body;
   if (!topic || !company || !model || !feedback || !original) {
     return res.status(400).json({ error: 'Missing required fields' });
   }
-  await streamGenerate(res, { topic, company, model, channel, duration, original, feedback });
+  await streamGenerate(res, { topic, company, model, channel, duration, language: language || 'en', original, feedback });
 });
 
 const PORT = process.env.PORT || 3000;
