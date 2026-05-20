@@ -54,7 +54,7 @@ async function getProfile(company) {
   return data?.profile || null;
 }
 
-async function search(embedding, company, count = 10) {
+async function search(embedding, company, count = 35) {
   const { data, error } = await supabase.rpc('match_documents', {
     query_embedding: embedding,
     match_count: count,
@@ -181,7 +181,7 @@ ${modelInstructions}
 
 ${durationGuidance}
 
-Use specific facts, names and language from the source material. Avoid generic phrases and clichés. Du må KUN bruge navne, fakta og situationer der fremgår direkte af kildematerialet. Opfind ingenting. ${langInstruction}`;
+Use specific facts, names and language from the source material. Avoid generic phrases and clichés. Du må KUN bruge navne, fakta og situationer der fremgår direkte af kildematerialet. Opfind ingenting. Each generation must find a distinct angle and opening — never repeat the same structure or first sentence as a previous version. ${langInstruction}`;
 }
 
 async function streamGenerate(res, promptArgs) {
@@ -195,12 +195,17 @@ async function streamGenerate(res, promptArgs) {
       embed(promptArgs.topic),
       getProfile(promptArgs.company),
     ]);
-    const chunks = await search(embedding, promptArgs.company, 20);
+    const allChunks = await search(embedding, promptArgs.company);
 
-    if (!chunks || chunks.length === 0) {
+    if (!allChunks || allChunks.length === 0) {
       res.write(`data: ${JSON.stringify({ error: 'No data found for this company. Try ingesting more content first.' })}\n\n`);
       return res.end();
     }
+
+    const top = allChunks.slice(0, 15);
+    const rest = allChunks.slice(15);
+    const sampled = rest.sort(() => Math.random() - 0.5).slice(0, 5);
+    const chunks = [...top, ...sampled].sort(() => Math.random() - 0.5);
 
     const context = chunks.map((c, i) => `[${i + 1}] ${c.content}`).join('\n\n');
     const prompt = buildPrompt({ ...promptArgs, context, profile });
@@ -209,6 +214,7 @@ async function streamGenerate(res, promptArgs) {
     const stream = anthropic.messages.stream({
       model: 'claude-sonnet-4-6',
       max_tokens: maxTokens,
+      temperature: 1.0,
       messages: [{ role: 'user', content: prompt }],
     });
 
