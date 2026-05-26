@@ -275,6 +275,13 @@ app.get('/api/debug', async (req, res) => {
       body: JSON.stringify({ filter_company: 'Falck' }),
     });
     const testData = await testRes.json();
+    // Get a stored embedding from DB to test match_documents with known-good vector
+    const { data: dbVec } = await supabase.from('documents').select('embedding').eq('company','Falck').limit(1).single();
+    let dbChunks = 'n/a';
+    if (dbVec?.embedding) {
+      const { data: dbRes } = await supabase.rpc('match_documents', { query_embedding: dbVec.embedding, match_count: 3, filter_company: 'Falck' });
+      dbChunks = dbRes?.length ?? 0;
+    }
     const vecRes = await fetch(`${process.env.SUPABASE_URL}/rest/v1/rpc/test_vector`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${process.env.SUPABASE_SECRET_KEY}`, 'apikey': process.env.SUPABASE_SECRET_KEY },
@@ -292,7 +299,8 @@ app.get('/api/debug', async (req, res) => {
     });
     const rawData = await rawRes.json();
     res.json({
-      version: 'v9',
+      version: 'v10',
+      db_vec_chunks: dbChunks,
       test_docs: Array.isArray(testData) ? testData.length : testData?.message,
       vec_test: vecData,
       embedding_dims: embedding?.length,
