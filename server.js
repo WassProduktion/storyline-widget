@@ -56,7 +56,7 @@ async function getProfile(company) {
 
 async function search(embedding, company, count = 35) {
   const { data, error } = await supabase.rpc('match_documents', {
-    query_embedding: embedding,
+    query_embedding: `[${embedding.join(',')}]`,
     match_count: count,
     filter_company: company || null,
   });
