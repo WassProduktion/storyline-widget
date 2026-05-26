@@ -269,16 +269,24 @@ app.get('/api/debug', async (req, res) => {
       match_count: 3,
       filter_company: 'Falck',
     });
-    const { count, error: countErr } = await supabase.from('documents').select('*', { count: 'exact', head: true }).eq('company', 'Falck');
-    const { data: sample1 } = await supabase.from('documents').select('content').eq('company', 'Falck').limit(1);
+    const rawRes = await fetch(`${process.env.SUPABASE_URL}/rest/v1/rpc/match_documents`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${process.env.SUPABASE_SECRET_KEY}`,
+        'apikey': process.env.SUPABASE_SECRET_KEY,
+      },
+      body: JSON.stringify({ query_embedding: `[${embedding.join(',')}]`, match_count: 3, filter_company: 'Falck' }),
+    });
+    const rawData = await rawRes.json();
     res.json({
-      version: 'v6',
+      version: 'v7',
       embedding_dims: embedding?.length,
-      rpc_error: error?.message || null,
-      chunks_found: data?.length ?? 0,
-      direct_count: count,
-      count_error: countErr?.message || null,
-      direct_sample: sample1?.[0]?.content?.slice(0, 80) || null,
+      rpc_js_error: error?.message || null,
+      chunks_js: data?.length ?? 0,
+      raw_status: rawRes.status,
+      chunks_raw: Array.isArray(rawData) ? rawData.length : 0,
+      raw_error: rawData?.message || null,
     });
   } catch (err) {
     res.json({ fatal_error: err.message });
