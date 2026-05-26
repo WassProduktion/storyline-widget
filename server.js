@@ -265,7 +265,7 @@ app.get('/api/debug', async (req, res) => {
   try {
     const embedding = await embed('beredskab og redning');
     const { data, error } = await supabase.rpc('match_documents', {
-      query_embedding: embedding,
+      query_embedding: `[${embedding.join(',')}]`,
       match_count: 3,
       filter_company: 'Falck',
     });
