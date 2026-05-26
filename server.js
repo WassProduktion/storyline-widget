@@ -269,10 +269,13 @@ app.get('/api/debug', async (req, res) => {
       match_count: 3,
       filter_company: 'Falck',
     });
+    const { data: countData } = await supabase.from('documents').select('*', { count: 'exact', head: true }).eq('company', 'Falck');
     res.json({
+      version: 'v5',
       embedding_dims: embedding?.length,
       rpc_error: error?.message || null,
       chunks_found: data?.length ?? 0,
+      direct_count: countData,
       sample: data?.[0]?.content?.slice(0, 100) || null,
     });
   } catch (err) {
