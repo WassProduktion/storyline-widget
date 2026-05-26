@@ -261,5 +261,24 @@ app.post('/api/refine', async (req, res) => {
   await streamGenerate(res, { topic, company, model, channel, duration, language: language || 'en', original, feedback });
 });
 
+app.get('/api/debug', async (req, res) => {
+  try {
+    const embedding = await embed('beredskab og redning');
+    const { data, error } = await supabase.rpc('match_documents', {
+      query_embedding: embedding,
+      match_count: 3,
+      filter_company: 'Falck',
+    });
+    res.json({
+      embedding_dims: embedding?.length,
+      rpc_error: error?.message || null,
+      chunks_found: data?.length ?? 0,
+      sample: data?.[0]?.content?.slice(0, 100) || null,
+    });
+  } catch (err) {
+    res.json({ fatal_error: err.message });
+  }
+});
+
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Storyline Widget running at http://localhost:${PORT}`));
