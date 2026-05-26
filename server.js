@@ -56,7 +56,7 @@ async function getProfile(company) {
 
 async function search(embedding, company, count = 35) {
   const { data, error } = await supabase.rpc('match_documents', {
-    query_embedding: `[${embedding.join(',')}]`,
+    query_embedding: `[${embedding.map(v => v.toFixed(8)).join(',')}]`,
     match_count: count,
     filter_company: company || null,
   });
@@ -265,7 +265,7 @@ app.get('/api/debug', async (req, res) => {
   try {
     const embedding = await embed('beredskab og redning');
     const { data, error } = await supabase.rpc('match_documents', {
-      query_embedding: `[${embedding.join(',')}]`,
+      query_embedding: `[${embedding.map(v => v.toFixed(8)).join(',')}]`,
       match_count: 3,
       filter_company: 'Falck',
     });
@@ -276,7 +276,7 @@ app.get('/api/debug', async (req, res) => {
         'Authorization': `Bearer ${process.env.SUPABASE_SECRET_KEY}`,
         'apikey': process.env.SUPABASE_SECRET_KEY,
       },
-      body: JSON.stringify({ query_embedding: `[${embedding.join(',')}]`, match_count: 3, filter_company: 'Falck' }),
+      body: JSON.stringify({ query_embedding: `[${embedding.map(v => v.toFixed(8)).join(',')}]`, match_count: 3, filter_company: 'Falck' }),
     });
     const rawData = await rawRes.json();
     res.json({
