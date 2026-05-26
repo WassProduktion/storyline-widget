@@ -275,6 +275,12 @@ app.get('/api/debug', async (req, res) => {
       body: JSON.stringify({ filter_company: 'Falck' }),
     });
     const testData = await testRes.json();
+    const vecRes = await fetch(`${process.env.SUPABASE_URL}/rest/v1/rpc/test_vector`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${process.env.SUPABASE_SECRET_KEY}`, 'apikey': process.env.SUPABASE_SECRET_KEY },
+      body: JSON.stringify({ v: `[${embedding.map(x => x.toFixed(8)).join(',')}]` }),
+    });
+    const vecData = await vecRes.json();
     const rawRes = await fetch(`${process.env.SUPABASE_URL}/rest/v1/rpc/match_documents`, {
       method: 'POST',
       headers: {
@@ -286,8 +292,9 @@ app.get('/api/debug', async (req, res) => {
     });
     const rawData = await rawRes.json();
     res.json({
-      version: 'v8',
+      version: 'v9',
       test_docs: Array.isArray(testData) ? testData.length : testData?.message,
+      vec_test: vecData,
       embedding_dims: embedding?.length,
       rpc_js_error: error?.message || null,
       chunks_js: data?.length ?? 0,
