@@ -269,14 +269,16 @@ app.get('/api/debug', async (req, res) => {
       match_count: 3,
       filter_company: 'Falck',
     });
-    const { data: countData } = await supabase.from('documents').select('*', { count: 'exact', head: true }).eq('company', 'Falck');
+    const { count, error: countErr } = await supabase.from('documents').select('*', { count: 'exact', head: true }).eq('company', 'Falck');
+    const { data: sample1 } = await supabase.from('documents').select('content').eq('company', 'Falck').limit(1);
     res.json({
-      version: 'v5',
+      version: 'v6',
       embedding_dims: embedding?.length,
       rpc_error: error?.message || null,
       chunks_found: data?.length ?? 0,
-      direct_count: countData,
-      sample: data?.[0]?.content?.slice(0, 100) || null,
+      direct_count: count,
+      count_error: countErr?.message || null,
+      direct_sample: sample1?.[0]?.content?.slice(0, 80) || null,
     });
   } catch (err) {
     res.json({ fatal_error: err.message });
