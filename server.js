@@ -169,9 +169,14 @@ Keep the same model structure. Output only the narrative text — no stage direc
 ${durationGuidance}`;
   }
 
+  const factInstruction = language === 'da'
+    ? 'Du må KUN bruge navne, fakta og situationer der fremgår direkte af kildematerialet. Opfind ingenting.'
+    : 'ONLY use names, facts and situations that appear directly in the source material. Do not invent anything.';
+
   return base + `Write a narrative for a ${channelLabel} video about: "${topic}"
 Target duration: ${durationLabel}
 Tone and register: ${tone}
+Language: ${langInstruction}
 
 Output ONLY the narrative text — no stage directions, no camera instructions, no scene descriptions. Only what is spoken or written on screen.
 
@@ -181,7 +186,7 @@ ${modelInstructions}
 
 ${durationGuidance}
 
-Use specific facts, names and language from the source material. Avoid generic phrases and clichés. Du må KUN bruge navne, fakta og situationer der fremgår direkte af kildematerialet. Opfind ingenting. Each generation must find a distinct angle and opening — never repeat the same structure or first sentence as a previous version. ${langInstruction}`;
+Use specific facts, names and language from the source material. Avoid generic phrases and clichés. ${factInstruction} Each generation must find a distinct angle and opening — never repeat the same structure or first sentence as a previous version.`;
 }
 
 async function streamGenerate(res, promptArgs) {
