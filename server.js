@@ -261,6 +261,34 @@ app.post('/api/refine', async (req, res) => {
   await streamGenerate(res, { topic, company, model, channel, duration, language: language || 'en', original, feedback });
 });
 
+app.get('/api/profile/:company', async (req, res) => {
+  try {
+    const { data, error } = await supabase
+      .from('company_profiles')
+      .select('profile')
+      .eq('company', req.params.company)
+      .single();
+    if (error) throw error;
+    res.json({ profile: data?.profile || '' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.put('/api/profile', async (req, res) => {
+  const { company, profile } = req.body;
+  if (!company || profile === undefined) return res.status(400).json({ error: 'Missing fields' });
+  try {
+    const { error } = await supabase
+      .from('company_profiles')
+      .upsert({ company, profile }, { onConflict: 'company' });
+    if (error) throw error;
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Storyline Widget running at http://localhost:${PORT}`));

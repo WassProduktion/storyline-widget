@@ -347,6 +347,81 @@
         flex-direction: column;
       }
     }
+
+    /* Brand profile editor */
+    .profile-toggle {
+      width: 100%;
+      background: none;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text-muted);
+      font-family: var(--font);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      padding: 10px 13px;
+      cursor: pointer;
+      text-align: left;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transition: border-color 0.15s, color 0.15s;
+    }
+    .profile-toggle:hover { border-color: #B0B0AC; color: var(--text); }
+    .profile-toggle.open { color: var(--text); border-color: #A0A800; }
+
+    .profile-editor {
+      display: none;
+      flex-direction: column;
+      gap: 14px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 16px;
+      margin-top: -8px;
+    }
+    .profile-editor.open { display: flex; }
+
+    .profile-field label {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 6px;
+    }
+    .profile-field label span {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+    }
+    .profile-field label em {
+      font-size: 10px;
+      font-style: normal;
+      color: var(--text-dim);
+    }
+    .profile-field textarea, .profile-field input[type="text"] {
+      font-size: 13px;
+      line-height: 1.55;
+    }
+    .profile-field textarea { resize: vertical; }
+
+    .profile-save-row {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+    .profile-save-row button {
+      flex: 1;
+    }
+    .profile-status {
+      font-size: 11px;
+      color: var(--text-dim);
+      white-space: nowrap;
+    }
+    .profile-status.ok { color: #6a7200; }
+    .profile-status.err { color: #c0392b; }
   </style>
 </head>
 <body>
@@ -400,6 +475,46 @@
     </div>
 
     <button class="btn btn-primary" id="generate-btn">Generate</button>
+
+    <button class="profile-toggle" id="profile-toggle">
+      <span>Brand Profil</span>
+      <span id="profile-toggle-arrow">↓</span>
+    </button>
+
+    <div class="profile-editor" id="profile-editor">
+      <div class="profile-field">
+        <label><span>Purpose</span><em>maks 1 linje</em></label>
+        <input type="text" id="pf-purpose" placeholder="Virksomhedens purpose i én sætning">
+      </div>
+      <div class="profile-field">
+        <label><span>Core Story</span><em>maks 5 linjer</em></label>
+        <textarea id="pf-core" rows="5" placeholder="Det narrative fundament — hvorfra, hvorfor, hvad driver dem"></textarea>
+      </div>
+      <div class="profile-field">
+        <label><span>Tone of Voice</span><em>maks 1 linje</em></label>
+        <input type="text" id="pf-tone" placeholder="3-4 adjektiver + hvad de eksplicit undgår">
+      </div>
+      <div class="profile-field">
+        <label><span>Nøglebudskaber</span><em>maks 3 punkter</em></label>
+        <textarea id="pf-messages" rows="4" placeholder="· Budskab 1&#10;· Budskab 2&#10;· Budskab 3"></textarea>
+      </div>
+      <div class="profile-field">
+        <label><span>Målgruppe</span><em>maks 2 linjer</em></label>
+        <textarea id="pf-audience" rows="2" placeholder="Hvem taler de til — konkret, ikke generisk"></textarea>
+      </div>
+      <div class="profile-field">
+        <label><span>Tabuer</span><em>maks 1 linje</em></label>
+        <input type="text" id="pf-taboos" placeholder="Hvad de ikke vil associeres med">
+      </div>
+      <div class="profile-field">
+        <label><span>Grunddata</span><em>maks 2 linjer</em></label>
+        <textarea id="pf-facts" rows="2" placeholder="Branche, størrelse, HQ, grundlæggelsesår, CEO"></textarea>
+      </div>
+      <div class="profile-save-row">
+        <button class="btn btn-secondary" id="profile-save-btn">Gem profil</button>
+        <span class="profile-status" id="profile-status"></span>
+      </div>
+    </div>
 
   </div>
 
@@ -570,6 +685,98 @@
       btn.textContent = 'Copied';
       setTimeout(() => { btn.textContent = 'Copy'; }, 1500);
     });
+  });
+
+  // Brand profile editor
+  const PROFILE_SECTIONS = ['PURPOSE', 'CORE STORY', 'TONE OF VOICE', 'NØGLEBUDSKABER', 'MÅLGRUPPE', 'TABUER', 'GRUNDDATA'];
+  const PROFILE_FIELDS = {
+    'PURPOSE':        document.getElementById('pf-purpose'),
+    'CORE STORY':     document.getElementById('pf-core'),
+    'TONE OF VOICE':  document.getElementById('pf-tone'),
+    'NØGLEBUDSKABER': document.getElementById('pf-messages'),
+    'MÅLGRUPPE':      document.getElementById('pf-audience'),
+    'TABUER':         document.getElementById('pf-taboos'),
+    'GRUNDDATA':      document.getElementById('pf-facts'),
+  };
+
+  function parseProfile(text) {
+    const result = {};
+    const parts = text.split(/^### /m);
+    for (const part of parts) {
+      const nl = part.indexOf('\n');
+      if (nl === -1) continue;
+      const key = part.slice(0, nl).trim();
+      result[key] = part.slice(nl + 1).trim();
+    }
+    return result;
+  }
+
+  function buildProfile() {
+    return PROFILE_SECTIONS
+      .map(s => `### ${s}\n${PROFILE_FIELDS[s].value.trim()}`)
+      .join('\n\n');
+  }
+
+  function setProfileStatus(msg, type) {
+    const el = document.getElementById('profile-status');
+    el.textContent = msg;
+    el.className = 'profile-status' + (type ? ' ' + type : '');
+    if (type === 'ok') setTimeout(() => { el.textContent = ''; el.className = 'profile-status'; }, 2500);
+  }
+
+  async function loadProfile(company) {
+    if (!company) return;
+    try {
+      const res = await fetch(`/api/profile/${encodeURIComponent(company)}`);
+      const { profile } = await res.json();
+      const sections = parseProfile(profile || '');
+      for (const key of PROFILE_SECTIONS) {
+        PROFILE_FIELDS[key].value = sections[key] || '';
+      }
+      setProfileStatus('');
+    } catch {
+      setProfileStatus('Kunne ikke hente profil', 'err');
+    }
+  }
+
+  const profileToggle = document.getElementById('profile-toggle');
+  const profileEditor = document.getElementById('profile-editor');
+  const profileArrow = document.getElementById('profile-toggle-arrow');
+  let profileOpen = false;
+
+  profileToggle.addEventListener('click', async () => {
+    profileOpen = !profileOpen;
+    profileEditor.classList.toggle('open', profileOpen);
+    profileToggle.classList.toggle('open', profileOpen);
+    profileArrow.textContent = profileOpen ? '↑' : '↓';
+    if (profileOpen) await loadProfile(document.getElementById('company').value);
+  });
+
+  document.getElementById('company').addEventListener('change', async () => {
+    if (profileOpen) await loadProfile(document.getElementById('company').value);
+  });
+
+  document.getElementById('profile-save-btn').addEventListener('click', async () => {
+    const company = document.getElementById('company').value;
+    if (!company) return;
+    const saveBtn = document.getElementById('profile-save-btn');
+    saveBtn.disabled = true;
+    saveBtn.textContent = 'Gemmer...';
+    try {
+      const res = await fetch('/api/profile', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ company, profile: buildProfile() }),
+      });
+      const data = await res.json();
+      if (data.ok) setProfileStatus('Gemt ✓', 'ok');
+      else setProfileStatus(data.error || 'Fejl', 'err');
+    } catch {
+      setProfileStatus('Netværksfejl', 'err');
+    } finally {
+      saveBtn.disabled = false;
+      saveBtn.textContent = 'Gem profil';
+    }
   });
 </script>
 </body>
